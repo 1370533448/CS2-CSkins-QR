@@ -102,13 +102,14 @@ public class CS2_CSkins_QR : BasePlugin, IPluginConfig<CS2_CSkins_QRConfig>
                         Console.WriteLine(success ? "[INFO] [CS2_CSkins_QR] 玩家关闭换肤成功" : "[ERROR] [CS2_CSkins_QR] 更新失败（可能被其他线程修改）");
                         continue;
                     }
+                    if (!string.IsNullOrWhiteSpace(imageUrl))
+                    {
+                        player.PrintToCenterHtml($"<img src='{imageUrl}'>");
+                        player.PrintToCenter("扫码换肤, 右键退出!");
+                    }
                 }
                 else
                     continue;
-
-                string qrImageUrl = $"{Config.WebUrl}" + $"/images_qr/{player.SteamID}.png";
-                player.PrintToCenterHtml($"<img src='{qrImageUrl}'>");
-                player.PrintToCenter("扫码换肤, 右键退出!");
             }
         });
         Console.WriteLine($"[INFO] {ModuleName} loaded --- ");
@@ -135,11 +136,18 @@ public class CS2_CSkins_QR : BasePlugin, IPluginConfig<CS2_CSkins_QRConfig>
                         // Console.WriteLine($"RedirectUrl: {data.RedirectUrl}");
                         // Console.WriteLine($"IsNew: {data.IsNew}");
                         // 添加或更新某个玩家的 QR 图片信息
-                        if (data.QrUrl != null) {
+                        if (!string.IsNullOrWhiteSpace(data.QrUrl)) {
                             bPlayerSeeingQRImage.AddOrUpdate(
                                 player.SteamID,                           // ulong 类型的 Key（玩家ID）
                                 new PlayerQRImageInfo(true, data.QrUrl),   // 如果 Key 不存在，创建新对象
                                 (key, existing) => new PlayerQRImageInfo(true, data.QrUrl) // 如果 Key 存在，更新对象
+                            );
+                        } else {
+                            string fallback = $"{Config.WebUrl.TrimEnd('/')}" + $"/images_qr/{player.SteamID}.png";
+                            bPlayerSeeingQRImage.AddOrUpdate(
+                                player.SteamID,
+                                new PlayerQRImageInfo(true, fallback),
+                                (key, existing) => new PlayerQRImageInfo(true, fallback)
                             );
                         }
                     }
@@ -172,7 +180,13 @@ public class CS2_CSkins_QR : BasePlugin, IPluginConfig<CS2_CSkins_QRConfig>
         Console.WriteLine($"[INFO] [CS2_CSkins_QR] OnCSkinsCommand!");
         if (!IsPlayerValid(player)) return;
         Console.WriteLine($"[INFO] [CS2_CSkins_QR] Player should see skin change QRImage!");
-        string queryUrl = $"{Config.WebUrl}" + $"/?qr={player!.SteamID}";
+        string baseUrl = Config.WebUrl.TrimEnd('/');
+        string entry = (Config.LoginEntryPath ?? string.Empty).Trim();
+        string pathSegment = string.IsNullOrEmpty(entry) ? string.Empty : (entry.StartsWith("/") ? entry : "/" + entry);
+        string paramName = string.IsNullOrWhiteSpace(Config.LoginQueryParamName) ? "qr" : Config.LoginQueryParamName.Trim();
+        string extra = (Config.LoginExtraParams ?? string.Empty).Trim().TrimStart('&');
+        string queryParams = $"{paramName}={player!.SteamID}" + (string.IsNullOrEmpty(extra) ? string.Empty : ("&" + extra));
+        string queryUrl = $"{baseUrl}{pathSegment}?{queryParams}";
         GetPlayerCSkinQRImageUrl(queryUrl, player);
     }
 
