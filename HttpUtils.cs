@@ -14,7 +14,16 @@ public static class Utils  // 改为 public static
     /// <returns>响应内容的字符串（JSON/XML/Plain Text）</returns>
     public static async Task<string?> HttpGetAsync(string url)
     {
-        using HttpClient client = new();
+        var handler = new HttpClientHandler
+        {
+            CheckCertificateRevocationList = false,
+            SslProtocols = System.Security.Authentication.SslProtocols.Tls12 | System.Security.Authentication.SslProtocols.Tls13
+        };
+        using HttpClient client = new(handler)
+        {
+            DefaultRequestVersion = System.Net.HttpVersion.Version11,
+            DefaultVersionPolicy = System.Net.Http.HttpVersionPolicy.RequestVersionOrLower
+        };
         try
         {
             HttpResponseMessage response = await client.GetAsync(url);
@@ -32,7 +41,7 @@ public static class Utils  // 改为 public static
         }
         catch (HttpRequestException e)
         {
-            Log("请求错误: " + e.Message);
+            Log("请求错误: " + e.Message + (e.InnerException != null ? (" | 内部异常: " + e.InnerException.Message) : string.Empty));
             return null;  // 或重新抛出异常 throw;
         }
     }
@@ -46,7 +55,16 @@ public static class Utils  // 改为 public static
     /// var response = await Utils.HttpPostAsync("https://example.com/api", "{\"name\":\"value\"}");
     public static async Task<string?> HttpPostAsync(string url, string content, string contentType = "application/json")
     {
-        using HttpClient client = new();
+        var handler = new HttpClientHandler
+        {
+            CheckCertificateRevocationList = false,
+            SslProtocols = System.Security.Authentication.SslProtocols.Tls12 | System.Security.Authentication.SslProtocols.Tls13
+        };
+        using HttpClient client = new(handler)
+        {
+            DefaultRequestVersion = System.Net.HttpVersion.Version11,
+            DefaultVersionPolicy = System.Net.Http.HttpVersionPolicy.RequestVersionOrLower
+        };
         try
         {
             var httpContent = new StringContent(content, System.Text.Encoding.UTF8, contentType);
@@ -66,7 +84,7 @@ public static class Utils  // 改为 public static
         }
         catch (HttpRequestException e)
         {
-            Log("POST 请求错误: " + e.Message);
+            Log("POST 请求错误: " + e.Message + (e.InnerException != null ? (" | 内部异常: " + e.InnerException.Message) : string.Empty));
             return null;
         }
     }
