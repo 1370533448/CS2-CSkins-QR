@@ -10,5 +10,14 @@ namespace CS2_CSkins_QR
 		[JsonPropertyName("WebUrl")]
 		public string WebUrl { get; set; } = "YourSkinChangeUrl";
 
+		[JsonPropertyName("LoginEntryPath")]
+		public string LoginEntryPath { get; set; } = "";
+
+		[JsonPropertyName("LoginQueryParamName")]
+		public string LoginQueryParamName { get; set; } = "qr";
+
+		[JsonPropertyName("LoginExtraParams")]
+		public string LoginExtraParams { get; set; } = "";
+
     }
 }
